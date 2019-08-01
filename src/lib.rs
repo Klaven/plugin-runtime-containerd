@@ -3,17 +3,17 @@ extern crate core;
 extern crate bollard;
 extern crate futures;
 
+use bollard::container::{
+    Config, CreateContainerOptions, HostConfig, LogOutput, LogsOptions, StartContainerOptions,
+};
+use bollard::Docker;
 use core::plugins::runtime::*;
 use futures::Future;
 use tokio::prelude::*;
 use tokio::runtime::*;
-use bollard::Docker;
-use bollard::container::{
-    Config, CreateContainerOptions, HostConfig, LogOutput, LogsOptions, StartContainerOptions,
-};
 
 #[derive(Debug)]
-struct ContainerdRuntimePlugin {
+pub struct ContainerdRuntimePlugin {
     docker: Docker,
     runner: tokio::runtime::Runtime,
 }
@@ -22,10 +22,10 @@ impl ContainerdRuntimePlugin {
     fn new() -> Self {
         let mut doc = Docker::connect_with_local_defaults().unwrap();
         let mut rt = Runtime::new().unwrap();
-        return ContainerdRuntimePlugin{
+        return ContainerdRuntimePlugin {
             runner: rt,
-            docker: doc
-        }
+            docker: doc,
+        };
     }
 }
 
@@ -46,7 +46,6 @@ impl RuntimePlugin for ContainerdRuntimePlugin {
     fn get_features(&self) -> Vec<RuntimeFeatures> {
         return vec![RuntimeFeatures::WorkloadRunner, RuntimeFeatures::Container];
     }
-    
     fn get_version(&self) -> i32 {
         0
     }
@@ -58,7 +57,6 @@ impl RuntimePlugin for ContainerdRuntimePlugin {
         config: &RuntimeConfig,
         options: &Option<SandboxConfig>,
     ) -> Result<String, RuntimeError> {
-
         return Err(RuntimeError::new(RuntimeErrorType::Unknown));
     }
 
@@ -68,12 +66,13 @@ impl RuntimePlugin for ContainerdRuntimePlugin {
             env: Some(vec![]),
             ..Default::default()
         };
-        let res = self.runner.block_on(self.docker
-            .create_container(Some(CreateContainerOptions { name: "nginx" }), nginx_config));
+        let res = self.runner.block_on(
+            self.docker
+                .create_container(Some(CreateContainerOptions { name: "nginx" }), nginx_config),
+        );
         let results = self.runner.block_on(
-            self.docker.start_container(
-                "nginx", None::<StartContainerOptions<String>>
-            )
+            self.docker
+                .start_container("nginx", None::<StartContainerOptions<String>>),
         );
         match results {
             Ok(_) => return None,
